@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchUser = async (id: string) => {
+    if (!supabase) { setLoading(false); return; }
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (username: string, avatarIcon: string) => {
+    if (!supabase) throw new Error("Supabase chưa được cấu hình");
     setLoading(true);
     try {
       // Create new profile

@@ -46,21 +46,23 @@ export default function CommentSection({ movieSlug, currentEpisodeName, onRequir
 
   useEffect(() => {
     fetchComments();
-    
+    if (!supabase) return;
+
     // Subscribe to real-time changes
     const channel = supabase
       .channel("public:comments")
-      .on("postgres_changes", { event: "*", schema: "public", table: "comments", filter: `movie_slug=eq.${movieSlug}` }, (payload) => {
-        fetchComments(); // Simplest way to get full profile data joined
+      .on("postgres_changes", { event: "*", schema: "public", table: "comments", filter: `movie_slug=eq.${movieSlug}` }, () => {
+        fetchComments();
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase!.removeChannel(channel);
     };
   }, [movieSlug]);
 
   const fetchComments = async () => {
+    if (!supabase) { setLoading(false); return; }
     try {
       const { data, error } = await supabase
         .from("comments")
@@ -86,7 +88,7 @@ export default function CommentSection({ movieSlug, currentEpisodeName, onRequir
       onRequireLogin();
       return;
     }
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !supabase) return;
 
     setSubmitting(true);
     try {
@@ -110,7 +112,7 @@ export default function CommentSection({ movieSlug, currentEpisodeName, onRequir
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+    if (!confirm("Bạn có chắc chắn muốn xóa bình luận này?") || !supabase) return;
     try {
       const { error } = await supabase.from("comments").delete().eq("id", id).eq("profile_id", user?.id);
       if (error) throw error;
