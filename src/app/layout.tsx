@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import GoatModal from "@/components/GoatModal";
+import { AuthProvider } from "@/lib/AuthContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,10 +37,12 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${inter.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased" style={{ backgroundColor: "var(--bg-primary)" }}>
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <GoatModal />
+        <AuthProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <GoatModal />
+        </AuthProvider>
       </body>
     </html>
   );

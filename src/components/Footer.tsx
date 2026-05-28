@@ -37,9 +37,9 @@ export default function Footer() {
   return (
     <footer style={{ background: "var(--bg-secondary)", borderTop: "1px solid var(--border)" }}>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 mb-12">
           {/* Brand */}
-          <div className="lg:col-span-2">
+          <div className="lg:w-1/3 space-y-6">
             <Link href="/" className="flex items-center gap-2 mb-4">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center"
@@ -75,30 +75,23 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Links */}
-          {Object.entries(links).map(([category, items]) => (
-            <div key={category}>
-              <h3
-                className="font-bold text-sm mb-4 uppercase tracking-wider"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {category}
-              </h3>
-              <ul className="space-y-3">
-                {items.map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="text-sm transition-colors hover:text-white"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+          {/* Disclaimer */}
+          <div className="lg:w-2/3 space-y-4">
+            <h3
+              className="font-bold text-sm mb-4 uppercase tracking-wider"
+              style={{ color: "var(--text-primary)" }}
+            >
+              Miễn trừ trách nhiệm
+            </h3>
+            <div className="text-sm leading-relaxed space-y-3" style={{ color: "var(--text-muted)" }}>
+              <p>
+                Trang web này cung cấp nội dung anime chỉ với mục đích giải trí và không chịu trách nhiệm về bất kỳ nội dung quảng cáo, liên kết của bên thứ ba hiển thị trên trang web của chúng tôi.
+              </p>
+              <p>
+                Tất cả thông tin và hình ảnh trên website đều được thu thập từ internet. Chúng tôi không chịu trách nhiệm về bất kỳ nội dung nào. Nếu bạn hoặc tổ chức của bạn có vấn đề gì liên quan đến nội dung hiển thị trên website, vui lòng liên hệ với chúng tôi để được giải quyết.
+              </p>
             </div>
-          ))}
+          </div>
         </div>
 
         {/* Newsletter */}
@@ -140,13 +133,13 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div
-          className="mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+          className="mt-10 pt-6 flex flex-col sm:flex-row items-center justify-center gap-4"
           style={{ borderTop: "1px solid var(--border)" }}
         >
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            © 2024 CinemaVerse. Tất cả quyền được bảo lưu.
+            © 2024 CinemaVerse.
           </p>
-          <div className="flex items-center gap-6">
+          {/* <div className="flex items-center gap-6">
             {["Chính Sách Bảo Mật", "Điều Khoản", "Cookie"].map((label) => (
               <Link
                 key={label}
@@ -157,7 +150,7 @@ export default function Footer() {
                 {label}
               </Link>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>

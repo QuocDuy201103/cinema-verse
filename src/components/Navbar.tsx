@@ -4,8 +4,15 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Film, Bell, Menu, X, Loader2 } from "lucide-react";
+import { Search, Film, Menu, X, Loader2, LogOut, User as UserIcon, Cat, Dog, Ghost, Smile, Rocket, Star, Zap, Heart, Bot, Sun, Moon } from "lucide-react";
 import { ApiMovieItem } from "@/types/api";
+import { useAuth } from "@/lib/AuthContext";
+import AuthModal from "@/components/AuthModal";
+
+const ICON_MAP: Record<string, any> = {
+  user: UserIcon, cat: Cat, dog: Dog, ghost: Ghost, smile: Smile,
+  rocket: Rocket, star: Star, zap: Zap, heart: Heart, bot: Bot
+};
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -14,6 +21,9 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ApiMovieItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [theme, setTheme] = useState("dark");
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -21,9 +31,30 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleOpenAuthModal = () => setAuthModalOpen(true);
+    
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("open-auth-modal", handleOpenAuthModal);
+    
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("open-auth-modal", handleOpenAuthModal);
+    };
   }, []);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("cinemaverse_theme") || "dark";
+    setTheme(savedTheme);
+  }, []);
+
+  useEffect(() => {
+    if (theme === "light") {
+      document.documentElement.classList.add("light");
+    } else {
+      document.documentElement.classList.remove("light");
+    }
+    localStorage.setItem("cinemaverse_theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -216,38 +247,79 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
 
-              {/* Notifications */}
+              {/* Theme Toggle */}
               <motion.button
                 whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                className="relative p-2 hidden sm:flex rounded-full"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="relative p-2 hidden sm:flex rounded-full transition-colors hover:bg-white/5"
                 style={{ color: "var(--text-secondary)" }}
-                aria-label="Thông báo"
+                aria-label="Chuyển giao diện"
               >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full badge-live"
-                  style={{ background: "var(--red-primary)" }} />
+                {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </motion.button>
 
-              {/* Avatar */}
-              <motion.button
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                className="w-9 h-9 rounded-full items-center justify-center font-bold text-sm hidden sm:flex"
-                style={{ background: "var(--red-primary)", color: "white" }}
-                aria-label="Tài khoản"
-              >
-                U
-              </motion.button>
+              {/* Avatar / Auth */}
+              {user ? (
+                <div className="hidden sm:flex items-center gap-3">
+                  <div className="relative group cursor-pointer">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold transition-all"
+                      style={{ background: "var(--red-primary)", color: "white" }}>
+                      {ICON_MAP[user.avatar_icon] ? (() => {
+                        const IconComponent = ICON_MAP[user.avatar_icon];
+                        return <IconComponent className="w-5 h-5" />;
+                      })() : user.username.charAt(0).toUpperCase()}
+                    </div>
+                    {/* Tooltip & Logout */}
+                    <div className="absolute top-full mt-2 right-0 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all z-50 pt-2">
+                      <div className="rounded-xl overflow-hidden shadow-2xl p-2 w-48"
+                        style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+                        <div className="px-3 py-2 border-b mb-1" style={{ borderColor: "var(--border)" }}>
+                          <p className="font-bold text-sm truncate" style={{ color: "var(--text-primary)" }}>{user.username}</p>
+                        </div>
+                        <button
+                          onClick={logout}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-white/5"
+                          style={{ color: "var(--red-primary)" }}
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Đăng xuất
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setAuthModalOpen(true)}
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:opacity-90"
+                  style={{ background: "var(--red-primary)", color: "white" }}
+                >
+                  <UserIcon className="w-4 h-4" />
+                  Đăng Nhập
+                </button>
+              )}
 
               {/* Mobile menu */}
-              <motion.button
-                whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                onClick={() => setMobileOpen(!mobileOpen)}
-                className="p-2 md:hidden rounded-full"
-                style={{ color: "var(--text-secondary)" }}
-                aria-label="Menu"
-              >
-                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </motion.button>
+              <div className="flex items-center gap-1 md:hidden">
+                <motion.button
+                  whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="p-2 rounded-full"
+                  style={{ color: "var(--text-secondary)" }}
+                  aria-label="Chuyển giao diện"
+                >
+                  {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                  onClick={() => setMobileOpen(!mobileOpen)}
+                  className="p-2 rounded-full"
+                  style={{ color: "var(--text-secondary)" }}
+                  aria-label="Menu"
+                >
+                  {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </motion.button>
+              </div>
             </div>
           </div>
         </div>
@@ -291,14 +363,37 @@ export default function Navbar() {
             </nav>
 
             <div className="p-6 border-t" style={{ borderColor: "var(--border)" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
-                  style={{ background: "var(--red-primary)", color: "white" }}>U</div>
-                <div>
-                  <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Người Dùng</p>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>Thành viên Premium</p>
+              {user ? (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
+                      style={{ background: "var(--red-primary)", color: "white" }}>
+                      {ICON_MAP[user.avatar_icon] ? (() => {
+                        const IconComponent = ICON_MAP[user.avatar_icon];
+                        return <IconComponent className="w-5 h-5" />;
+                      })() : user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>{user.username}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { logout(); setMobileOpen(false); }}
+                    className="w-full py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+                    style={{ background: "rgba(229, 9, 20, 0.1)", color: "var(--red-primary)" }}
+                  >
+                    <LogOut className="w-4 h-4" /> Đăng Xuất
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <button
+                  onClick={() => { setAuthModalOpen(true); setMobileOpen(false); }}
+                  className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+                  style={{ background: "var(--red-primary)", color: "white" }}
+                >
+                  <UserIcon className="w-4 h-4" /> Đăng Nhập
+                </button>
+              )}
             </div>
           </motion.div>
         )}
@@ -315,6 +410,8 @@ export default function Navbar() {
           />
         )}
       </AnimatePresence>
+
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </>
   );
 }

@@ -9,6 +9,7 @@ import {
   ChevronDown, ChevronUp, MonitorPlay
 } from "lucide-react";
 import { ApiMovieDetail, ApiEpisodeItem } from "@/types/api";
+import CommentSection from "@/components/CommentSection";
 
 interface Props {
   movie: ApiMovieDetail;
@@ -291,6 +292,15 @@ export default function MovieDetailClient({ movie }: Props) {
                 </div>
               </div>
             )}
+            
+            {/* Comment Section */}
+            <div className="pt-8 mt-8 border-t" style={{ borderColor: "var(--border)" }}>
+              <CommentSection 
+                movieSlug={movie.slug} 
+                currentEpisodeName={currentEp?.name}
+                onRequireLogin={() => window.dispatchEvent(new Event("open-auth-modal"))}
+              />
+            </div>
           </div>
 
           {/* Right sidebar */}
