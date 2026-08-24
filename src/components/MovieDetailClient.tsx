@@ -1,26 +1,120 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Play, ChevronLeft, Heart, Share2, Bookmark,
   Clock, Globe, Calendar, Tv, Award, Server,
-  ChevronDown, ChevronUp, MonitorPlay
+  ChevronDown, ChevronUp, MonitorPlay, Loader2
 } from "lucide-react";
-import { ApiMovieDetail, ApiEpisodeItem } from "@/types/api";
+import { ApiMovieDetail, ApiEpisodeItem, ApiMovieItem } from "@/types/api";
+import { getMovieDetail, getMoviesByGenre } from "@/lib/api";
 import CommentSection from "@/components/CommentSection";
+import MovieRow from "@/components/MovieRow";
 
 interface Props {
-  movie: ApiMovieDetail;
+  slug: string;
+  initialMovie?: ApiMovieDetail | null;
 }
 
-export default function MovieDetailClient({ movie }: Props) {
+export default function MovieDetailClient({ slug, initialMovie }: Props) {
+  const [movie, setMovie] = useState<ApiMovieDetail | null>(initialMovie || null);
+  const [loading, setLoading] = useState(!initialMovie);
+  const [error, setError] = useState(false);
+  const [related, setRelated] = useState<ApiMovieItem[]>([]);
+
   const [selectedServer, setSelectedServer] = useState(0);
   const [selectedEpisode, setSelectedEpisode] = useState<ApiEpisodeItem | null>(null);
   const [showAllEps, setShowAllEps] = useState(false);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Sync initialMovie prop
+  useEffect(() => {
+    if (initialMovie) {
+      setMovie(initialMovie);
+      setLoading(false);
+    }
+  }, [initialMovie]);
+
+  // Client-side fallback fetch when initialMovie is null (e.g. 403 on Vercel build/server)
+  useEffect(() => {
+    if (movie) return;
+    let isMounted = true;
+
+    async function loadMovie() {
+      setLoading(true);
+      setError(false);
+      try {
+        const data = await getMovieDetail(slug);
+        if (isMounted) {
+          if (data?.movie) {
+            setMovie(data.movie);
+          } else {
+            setError(true);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading movie detail on client:", err);
+        if (isMounted) setError(true);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadMovie();
+    return () => { isMounted = false; };
+  }, [slug, movie]);
+
+  // Fetch related movies by first genre
+  useEffect(() => {
+    if (!movie) return;
+    const genreList = movie.category?.["2"]?.list ?? [];
+    const firstGenreSlug = genreList[0]?.name
+      ?.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/\s+/g, "-") ?? "";
+
+    if (firstGenreSlug) {
+      getMoviesByGenre(firstGenreSlug, 1)
+        .then((relData) => {
+          setRelated(relData.items.filter((m) => m.slug !== slug).slice(0, 10));
+        })
+        .catch(() => setRelated([]));
+    }
+  }, [movie, slug]);
+
+  if (loading) {
+    return (
+      <div className="pt-24 pb-20 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-10 h-10 animate-spin mb-4" style={{ color: "var(--red-primary)" }} />
+        <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
+          Đang tải thông tin phim...
+        </p>
+      </div>
+    );
+  }
+
+  if (error || !movie) {
+    return (
+      <div className="pt-28 pb-24 flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <div className="text-6xl mb-4">🎬</div>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+          Không Tìm Thấy Phim
+        </h1>
+        <p className="text-sm max-w-md mb-6" style={{ color: "var(--text-muted)" }}>
+          Bộ phim này không tồn tại hoặc đã bị xóa khỏi hệ thống.
+        </p>
+        <Link href="/phim" className="btn-primary">
+          <ChevronLeft className="w-4 h-4" />
+          Quay Lại Kho Phim
+        </Link>
+      </div>
+    );
+  }
 
   const server = movie.episodes?.[selectedServer];
   const episodes = server?.items ?? [];
@@ -390,6 +484,18 @@ export default function MovieDetailClient({ movie }: Props) {
           </motion.aside>
         </div>
       </div>
+
+      {/* Related Movies */}
+      {related.length > 0 && (
+        <div className="mt-8 pb-12">
+          <MovieRow
+            title="Phim Liên Quan"
+            movies={related}
+            badge="GỢI Ý"
+            badgeColor="rgba(99,102,241,0.9)"
+          />
+        </div>
+      )}
     </div>
   );
 }

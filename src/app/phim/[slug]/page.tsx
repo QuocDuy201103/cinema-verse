@@ -32,49 +32,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function MovieDetailPage({ params }: Props) {
   const { slug } = await params;
 
-  let data;
+  let movie = null;
   try {
-    data = await getMovieDetail(slug);
-  } catch {
-    notFound();
-  }
-
-  if (!data?.movie) notFound();
-
-  const movie = data.movie;
-
-  // Extract genre slug for related movies
-  const genreList = movie.category?.["2"]?.list ?? [];
-  const firstGenreSlug = genreList[0]?.name
-    ?.toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/\s+/g, "-") ?? "";
-
-  let related: Awaited<ReturnType<typeof getMoviesByGenre>>["items"] = [];
-  if (firstGenreSlug) {
-    try {
-      const relData = await getMoviesByGenre(firstGenreSlug, 1);
-      related = relData.items.filter((m) => m.slug !== slug).slice(0, 10);
-    } catch {
-      related = [];
+    const data = await getMovieDetail(slug);
+    if (data?.movie) {
+      movie = data.movie;
     }
+  } catch {
+    movie = null;
   }
 
   return (
     <div style={{ background: "var(--bg-primary)" }}>
-      <MovieDetailClient movie={movie} />
-      {related.length > 0 && (
-        <div className="mt-8">
-          <MovieRow
-            title="Phim Liên Quan"
-            movies={related}
-            badge="GỢI Ý"
-            badgeColor="rgba(99,102,241,0.9)"
-          />
-        </div>
-      )}
+      <MovieDetailClient slug={slug} initialMovie={movie} />
     </div>
   );
 }
