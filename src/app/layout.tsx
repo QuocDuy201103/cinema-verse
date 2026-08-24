@@ -35,8 +35,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${inter.variable} h-full`}>
-      <body className="min-h-full flex flex-col antialiased" style={{ backgroundColor: "var(--bg-primary)" }}>
+    <html
+      lang="vi"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+      className={`${inter.variable} h-full`}
+    >
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col antialiased"
+        style={{ backgroundColor: "var(--bg-primary)" }}
+      >
         <AuthProvider>
           <Navbar />
           <main className="flex-1">{children}</main>

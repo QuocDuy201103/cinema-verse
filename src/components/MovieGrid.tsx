@@ -6,13 +6,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import MovieCard from "./MovieCard";
 import { ApiMovieItem, ApiListResponse } from "@/types/api";
+import {
+  getNewMovies,
+  getMoviesByCategory,
+  getMoviesByGenre,
+  getMoviesByCountry,
+  getMoviesByYear,
+  searchMovies,
+} from "@/lib/api";
 
 const CATEGORIES = [
   { slug: "all", label: "🎬 Tất Cả", type: "all" },
-  { slug: "phim-dang-chieu", label: "🔥 Đang Chiếu", type: "danh-sach" },
   { slug: "phim-le", label: "🎬 Phim Lẻ", type: "danh-sach" },
   { slug: "phim-bo", label: "📺 Phim Bộ", type: "danh-sach" },
   { slug: "hoat-hinh", label: "🎨 Hoạt Hình", type: "danh-sach" },
+  { slug: "tv-shows", label: "📺 TV Shows", type: "danh-sach" },
 ];
 
 const GENRES = [
@@ -61,7 +69,7 @@ export default function MovieGrid({ initialGenre = "" }: { initialGenre?: string
 
   const [filter, setFilter] = useState<FilterState>({
     mode: initialGenre ? "genre" : "category",
-    slug: initialGenre || "phim-dang-chieu",
+    slug: initialGenre || "all",
     page: 1,
     keyword: "",
   });
@@ -78,8 +86,8 @@ export default function MovieGrid({ initialGenre = "" }: { initialGenre?: string
     } else if (searchParams.toString() === "") {
       // If we navigated to /phim without any query params (like clicking "Phim" in navbar)
       setFilter((prev) => {
-        if (prev.mode !== "category" || prev.slug !== "phim-dang-chieu") {
-           return { mode: "category", slug: "phim-dang-chieu", page: 1, keyword: "" };
+        if (prev.mode !== "category" || prev.slug !== "all") {
+           return { mode: "category", slug: "all", page: 1, keyword: "" };
         }
         return prev;
       });
@@ -89,31 +97,29 @@ export default function MovieGrid({ initialGenre = "" }: { initialGenre?: string
   const fetchMovies = useCallback(async (f: FilterState) => {
     setLoading(true);
     try {
-      let url = "";
-      const base = "https://phim.nguonc.com/api";
+      let data: ApiListResponse;
 
       if (f.mode === "search" && f.keyword) {
-        url = `${base}/films/search?keyword=${encodeURIComponent(f.keyword)}`;
+        data = (await searchMovies(f.keyword)) as unknown as ApiListResponse;
       } else if (f.mode === "genre") {
-        url = `${base}/films/the-loai/${f.slug}?page=${f.page}`;
+        data = await getMoviesByGenre(f.slug, f.page);
       } else if (f.mode === "country") {
-        url = `${base}/films/quoc-gia/${f.slug}?page=${f.page}`;
+        data = await getMoviesByCountry(f.slug, f.page);
       } else if (f.mode === "year") {
-        url = `${base}/films/nam-phat-hanh/${f.slug}?page=${f.page}`;
+        data = await getMoviesByYear(f.slug, f.page);
       } else {
         // category
         if (f.slug === "all") {
-          url = `${base}/films/phim-moi-cap-nhat?page=${f.page}`;
+          data = await getNewMovies(f.page);
         } else {
-          url = `${base}/films/danh-sach/${f.slug}?page=${f.page}`;
+          data = await getMoviesByCategory(f.slug, f.page);
         }
       }
 
-      const res = await fetch(url);
-      const data = await res.json();
       setMovies(data.items || []);
       setTotalPages(data.paginate?.total_page || 1);
-    } catch {
+    } catch (err) {
+      console.error("Error fetching movies in MovieGrid:", err);
       setMovies([]);
     } finally {
       setLoading(false);
@@ -349,8 +355,8 @@ export default function MovieGrid({ initialGenre = "" }: { initialGenre?: string
             <div className="text-5xl mb-4">🎬</div>
             <h3 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>Không tìm thấy phim nào</h3>
             <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
-            <button onClick={() => setCategory("phim-dang-chieu")} className="btn-primary text-sm">
-              Xem Phim Đang Chiếu
+            <button onClick={() => setCategory("all")} className="btn-primary text-sm">
+              Xem Tất Cả Phim
             </button>
           </div>
         )}

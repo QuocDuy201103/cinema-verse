@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Film, Menu, X, Loader2, LogOut, User as UserIcon, Cat, Dog, Ghost, Smile, Rocket, Star, Zap, Heart, Bot, Sun, Moon } from "lucide-react";
 import { ApiMovieItem } from "@/types/api";
+import { searchMovies } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
 import AuthModal from "@/components/AuthModal";
 
@@ -71,12 +72,10 @@ export default function Navbar() {
     setSearchLoading(true);
     searchTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `https://phim.nguonc.com/api/films/search?keyword=${encodeURIComponent(searchQuery.trim())}`
-        );
-        const data = await res.json();
+        const data = await searchMovies(searchQuery.trim());
         setSearchResults((data.items ?? []).slice(0, 6));
-      } catch {
+      } catch (err) {
+        console.error("Error searching movies in Navbar:", err);
         setSearchResults([]);
       } finally {
         setSearchLoading(false);

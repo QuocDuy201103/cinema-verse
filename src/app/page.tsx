@@ -15,7 +15,7 @@ export default async function HomePage() {
   // Fetch all sections in parallel
   const [newData, dangChieuData, phimLeData, phimBoData] = await Promise.allSettled([
     getNewMovies(1),
-    getMoviesByCategory("phim-dang-chieu", 1),
+    getMoviesByCategory("tv-shows", 1),
     getMoviesByCategory("phim-le", 1),
     getMoviesByCategory("phim-bo", 1),
   ]);
