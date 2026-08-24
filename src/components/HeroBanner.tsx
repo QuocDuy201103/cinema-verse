@@ -5,14 +5,35 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Info, Tv, ChevronLeft, ChevronRight, Clock, Globe } from "lucide-react";
 import { ApiMovieItem } from "@/types/api";
+import { getNewMovies } from "@/lib/api";
 
 interface HeroBannerProps {
   movies: ApiMovieItem[];
 }
 
-export default function HeroBanner({ movies }: HeroBannerProps) {
+export default function HeroBanner({ movies: initialMovies = [] }: HeroBannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [movies, setMovies] = useState<ApiMovieItem[]>(initialMovies);
+
+  useEffect(() => {
+    if (initialMovies.length > 0) {
+      setMovies(initialMovies);
+    }
+  }, [initialMovies]);
+
+  useEffect(() => {
+    if (movies.length > 0) return;
+    async function loadFallback() {
+      try {
+        const res = await getNewMovies(1);
+        if (res?.items) setMovies(res.items.slice(0, 6));
+      } catch {
+        // Fallback fail
+      }
+    }
+    loadFallback();
+  }, [movies.length]);
 
   const current = movies[currentIndex];
 

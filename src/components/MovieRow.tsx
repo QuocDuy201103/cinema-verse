@@ -1,14 +1,17 @@
 "use client";
 
-import { useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import MovieCard from "./MovieCard";
-import { ApiMovieItem } from "@/types/api";
+import { ApiMovieItem, ApiListResponse } from "@/types/api";
+import { getNewMovies, getMoviesByCategory } from "@/lib/api";
 
 interface MovieRowProps {
   title: string;
   movies: ApiMovieItem[];
+  categorySlug?: string;
+  isNewMovies?: boolean;
   badge?: string;
   badgeColor?: string;
   showRank?: boolean;
@@ -16,12 +19,41 @@ interface MovieRowProps {
 
 export default function MovieRow({
   title,
-  movies,
+  movies: initialMovies = [],
+  categorySlug,
+  isNewMovies = false,
   badge,
   badgeColor = "var(--red-primary)",
   showRank = false,
 }: MovieRowProps) {
   const rowRef = useRef<HTMLDivElement>(null);
+  const [movies, setMovies] = useState<ApiMovieItem[]>(initialMovies);
+
+  useEffect(() => {
+    if (initialMovies.length > 0) {
+      setMovies(initialMovies);
+    }
+  }, [initialMovies]);
+
+  useEffect(() => {
+    if (movies.length > 0) return;
+    async function loadFallback() {
+      try {
+        let res: ApiListResponse;
+        if (isNewMovies) {
+          res = await getNewMovies(1);
+        } else if (categorySlug) {
+          res = await getMoviesByCategory(categorySlug, 1);
+        } else {
+          return;
+        }
+        if (res?.items) setMovies(res.items);
+      } catch {
+        // Fallback fail
+      }
+    }
+    loadFallback();
+  }, [movies.length, isNewMovies, categorySlug]);
 
   const scroll = (dir: "left" | "right") => {
     if (!rowRef.current) return;

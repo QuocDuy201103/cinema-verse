@@ -35,7 +35,7 @@ export default async function HomePage() {
 
       {/* Mới cập nhật */}
       <section className="pt-10">
-        <MovieRow title="Mới Cập Nhật" movies={newMovies} badge="MỚI" showRank />
+        <MovieRow title="Mới Cập Nhật" movies={newMovies} isNewMovies badge="MỚI" showRank />
       </section>
 
       {/* Stats */}
@@ -45,6 +45,7 @@ export default async function HomePage() {
       <MovieRow
         title="Phim Đang Chiếu"
         movies={dangChieu}
+        categorySlug="tv-shows"
         badge="HOT"
         badgeColor="var(--red-primary)"
       />
@@ -56,6 +57,7 @@ export default async function HomePage() {
       <MovieRow
         title="Phim Lẻ Hay"
         movies={phimLe}
+        categorySlug="phim-le"
         badge="PHIM LẺ"
         badgeColor="rgba(99,102,241,0.9)"
       />
@@ -64,6 +66,7 @@ export default async function HomePage() {
       <MovieRow
         title="Phim Bộ Hấp Dẫn"
         movies={phimBo}
+        categorySlug="phim-bo"
         badge="PHIM BỘ"
         badgeColor="rgba(16,185,129,0.9)"
       />
