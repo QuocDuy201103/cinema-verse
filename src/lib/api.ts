@@ -53,7 +53,20 @@ async function fetchApi<T>(
   let lastError: unknown;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const fetchOptions: RequestInit = {};
+      const headers: Record<string, string> = {
+        Accept: "application/json, text/plain, */*",
+        "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+      };
+
+      if (typeof window === "undefined") {
+        headers["User-Agent"] =
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+      }
+
+      const fetchOptions: RequestInit = {
+        headers,
+      };
+
       if (revalidate !== undefined && typeof window === "undefined") {
         // Cấu hình cache cho Next.js Server Side Fetch
         (fetchOptions as any).next = { revalidate };
